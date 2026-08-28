@@ -19,12 +19,12 @@ async function createMcUser(soapEndpoint, accessToken, id, mcConfig, roleObjectI
       <Email>thorgops@salesforce.com</Email>
       <Password>${MC_PASSWORD}</Password>
       <MustChangePassword>false</MustChangePassword>
+      <DefaultBusinessChannel>${mcConfig.childMid}</DefaultBusinessChannel>
       <AssociatedBusinessUnits>
         <BusinessUnit>
           <ID>${mcConfig.childMid}</ID>
         </BusinessUnit>
       </AssociatedBusinessUnits>
-      <DefaultBusinessUnitID>${mcConfig.childMid}</DefaultBusinessUnitID>
       <Roles>
         <Role>
           <ObjectID>${roleObjectId}</ObjectID>
