@@ -16,7 +16,17 @@ const ORG_CONFIG = {
       '0PSfn0000055u3JGAQ', // MarketingCloudManager
       '0PSfn0000055pQnGAI', // DataCloudActManager
       '0PSfn0000055u3KGAQ'  // TableauEinsteinIncludedAppBusinessUser
-    ]
+    ],
+    mc: {
+      label: 'Org 1 MC (mkt004-mc-1)',
+      parentMid: 517036101,
+      childMid: 517036813,
+      loginDomain: 'mkt004-1.com',
+      roleName: 'Marketing_Cloud_Student',
+      clientIdEnvVar: 'MC_CLIENT_ID_ORG1',
+      clientSecretEnvVar: 'MC_CLIENT_SECRET_ORG1',
+      subdomainEnvVar: 'MC_SUBDOMAIN_ORG1'
+    }
   },
   'Org 2': {
     label: 'Org 2 (mkt004-2)',

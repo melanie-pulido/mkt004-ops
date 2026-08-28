@@ -1,0 +1,21 @@
+name: Create MC Users
+description: Create Marketing Cloud users for a MKT004 workshop org
+labels: ["create-mc-users"]
+body:
+  - type: dropdown
+    id: org
+    attributes:
+      label: Org
+      description: Which org to create MC users in
+      options:
+        - Org 1 (mkt004-1)
+    validations:
+      required: true
+  - type: textarea
+    id: user-ids
+    attributes:
+      label: User IDs
+      description: One ID per line (e.g. 0001). Each ID generates an MC user in the child BU with the Marketing_Cloud_Student role.
+      placeholder: "0001\n0002\n0003"
+    validations:
+      required: true
