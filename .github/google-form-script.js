@@ -52,7 +52,7 @@ function onFormSubmit(e) {
   var body  = '### Org\n\n' + org + '\n\n### User IDs\n\n' + userIds;
 
   var submitterEmail = e.response.getRespondentEmail();
-  if (submitterEmail) body += '\n\n---\n_Submitted by: ' + submitterEmail + '_';
+  if (submitterEmail) body += '\n\n### Submitted By\n\n' + submitterEmail;
 
   var issueUrl = createGitHubIssue(title, body, label);
 
