@@ -12,12 +12,14 @@
  *  3. Run testConnection() once manually to confirm your token works.
  *  4. Enable "Collect email addresses" in Form Settings for confirmation emails.
  *
- * FORM QUESTIONS (create in this order):
+ * FORM QUESTIONS (titles must match exactly):
  *  1. "What would you like to do?"  — Dropdown (required)
  *       • Create MKT004 Users
  *       • Deactivate MKT004 Users
- *  2. "Org"  — Dropdown (required)
- *       • Org 1 (mkt004-1)
+ *  2. "Select the org:"  — Dropdown (required)
+ *       • Org 1
+ *       • Org 2
+ *       • Org 3
  *  3. "User IDs"  — Paragraph (required)
  *       Description hint: One ID per line, e.g. 0001
  */
@@ -37,7 +39,7 @@ function onFormSubmit(e) {
   });
 
   var action  = data['What would you like to do?'];
-  var org     = data['Org'];
+  var org     = data['Select the org:'];
   var userIds = data['User IDs'];
   var label   = LABEL_MAP[action];
 
