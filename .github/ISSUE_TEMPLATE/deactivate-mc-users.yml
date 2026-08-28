@@ -1,0 +1,21 @@
+name: Deactivate MC Users
+description: Deactivate Marketing Cloud users for a MKT004 workshop org
+labels: ["deactivate-mc-users"]
+body:
+  - type: dropdown
+    id: org
+    attributes:
+      label: Org
+      description: Which org to deactivate MC users in
+      options:
+        - Org 1 (mkt004-1)
+    validations:
+      required: true
+  - type: textarea
+    id: user-ids
+    attributes:
+      label: User IDs
+      description: One ID per line (e.g. 0001). Each ID resolves to NTO_User_<ID>@mkt004-1.com and sets ActiveFlag=false.
+      placeholder: "0001\n0002\n0003"
+    validations:
+      required: true
