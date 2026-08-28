@@ -111,9 +111,9 @@ async function main() {
   const lines = [
     `### MKT004 User Creation — ${orgConfig.label}`,
     '',
-    '| ID | CRM | MC |',
-    '|----|-----|----|',
-    ...results.map(r => `| ${r.id} | ${r.crmIcon} ${r.crmText} | ${r.mcIcon} ${r.mcText} |`),
+    '| ID | Username | Password | CRM User | MC User |',
+    '|----|----------|----------|----------|---------|',
+    ...results.map(r => `| ${r.id} | NTO_User_${r.id}@${mcConfig.loginDomain} | ${CRM_PASSWORD} | ${r.crmIcon} ${r.crmText} | ${r.mcIcon} ${r.mcText} |`),
     '',
     `**${successCount} / ${ids.length} users fully created.**`
   ];
