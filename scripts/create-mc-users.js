@@ -24,9 +24,7 @@ async function createMcUser(soapEndpoint, accessToken, id, mcConfig, roleObjectI
           <ID>${mcConfig.childMid}</ID>
         </BusinessUnit>
       </AssociatedBusinessUnits>
-      <DefaultBusinessChannel>
-        <ID>${mcConfig.childMid}</ID>
-      </DefaultBusinessChannel>
+      <DefaultBusinessUnitID>${mcConfig.childMid}</DefaultBusinessUnitID>
       <Roles>
         <Role>
           <ObjectID>${roleObjectId}</ObjectID>
