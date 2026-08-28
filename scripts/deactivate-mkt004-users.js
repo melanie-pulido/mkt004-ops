@@ -76,9 +76,9 @@ async function main() {
   const lines = [
     `### MKT004 User Deactivation — ${orgConfig.label}`,
     '',
-    '| ID | CRM | MC |',
-    '|----|-----|----|',
-    ...results.map(r => `| ${r.id} | ${r.crmIcon} ${r.crmText} | ${r.mcIcon} ${r.mcText} |`),
+    '| ID | Username | CRM Org | MC Org |',
+    '|----|----------|---------|--------|',
+    ...results.map(r => `| ${r.id} | NTO_User_${r.id}@${orgConfig.crmDomain} | ${r.crmIcon} ${r.crmText} | ${r.mcIcon} ${r.mcText} |`),
     '',
     `**${successCount} / ${ids.length} users fully deactivated.**`
   ];
