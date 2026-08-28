@@ -1,8 +1,8 @@
 'use strict';
 
-const { getAccessToken, sfRequest } = require('./sf-client');
+const { getAccessToken, sfRequest, soapLogin, soapChangeOwnPassword } = require('./sf-client');
 const { ORG_CONFIG } = require('./org-config');
-const { buildCrmUser, CRM_PASSWORD } = require('./user-templates');
+const { buildCrmUser, CRM_PASSWORD, TEMP_PASSWORD } = require('./user-templates');
 const { parseIssueBody } = require('./parse-issue-body');
 
 async function main() {
@@ -41,13 +41,23 @@ async function main() {
 
       const userId = createResp.body.id;
 
-      // 2. Set password
+      // 2. Set a temp password as admin, then immediately change it as the user.
+      //    Salesforce marks admin-set passwords as "must change on first login".
+      //    By logging in via SOAP as the user and calling changeOwnPassword, we
+      //    clear that flag so students can log in directly without being prompted.
       const pwResp = await sfRequest(instanceUrl, accessToken, 'POST',
         `/services/data/v64.0/sobjects/User/${userId}/password`,
-        { NewPassword: CRM_PASSWORD }
+        { NewPassword: TEMP_PASSWORD }
       );
       if (pwResp.status !== 200 && pwResp.status !== 204) {
-        notes.push(`password set failed (${pwResp.status})`);
+        notes.push(`temp password failed (${pwResp.status})`);
+      } else {
+        try {
+          const { sessionId, serverUrl } = await soapLogin(instanceUrl, userData.Username, TEMP_PASSWORD);
+          await soapChangeOwnPassword(serverUrl, sessionId, TEMP_PASSWORD, CRM_PASSWORD);
+        } catch (soapErr) {
+          notes.push(`password activation failed: ${soapErr.message}`);
+        }
       }
 
       // 3. Assign permission sets
