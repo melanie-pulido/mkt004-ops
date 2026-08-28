@@ -1,0 +1,57 @@
+name: Patch MC User
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  patch-mc-user:
+    if: github.event.label.name == 'patch-mc-user'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.CHECKOUT_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set MustChangePassword=false
+        id: run_script
+        run: node scripts/patch-mc-user.js > /tmp/result.txt 2>&1
+        continue-on-error: true
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          MC_CLIENT_ID_ORG1: ${{ secrets.MC_CLIENT_ID_ORG1 }}
+          MC_CLIENT_SECRET_ORG1: ${{ secrets.MC_CLIENT_SECRET_ORG1 }}
+          MC_SUBDOMAIN_ORG1: ${{ secrets.MC_SUBDOMAIN_ORG1 }}
+
+      - name: Post results
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const result = fs.readFileSync('/tmp/result.txt', 'utf8');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: result || '_(no output)_'
+            });
+            if ('${{ steps.run_script.outcome }}' === 'success') {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                state: 'closed'
+              });
+            }
+
+      - name: Fail on error
+        if: steps.run_script.outcome == 'failure'
+        run: exit 1
