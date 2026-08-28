@@ -18,6 +18,5 @@ function buildCrmUser(id, orgConfig) {
 }
 
 const CRM_PASSWORD = 'journey@123';
-const TEMP_PASSWORD = 'Temp1234';
 
-module.exports = { buildCrmUser, CRM_PASSWORD, TEMP_PASSWORD };
+module.exports = { buildCrmUser, CRM_PASSWORD };

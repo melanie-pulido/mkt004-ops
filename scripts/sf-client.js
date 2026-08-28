@@ -178,4 +178,18 @@ async function soapChangeOwnPassword(serverUrl, sessionId, oldPassword, newPassw
   });
 }
 
-module.exports = { getAccessToken, sfRequest, soapLogin, soapChangeOwnPassword };
+// Set a user's password via Apex System.setPassword(), executed through the
+// Tooling API's executeAnonymous endpoint. This avoids the REST API /password
+// endpoint, which marks passwords as "admin-set" and triggers a forced change
+// on first login. System.setPassword() does not set that flag.
+async function apexSetPassword(instanceUrl, accessToken, userId, password) {
+  const apex = `System.setPassword('${userId}', '${password}');`;
+  const result = await sfRequest(instanceUrl, accessToken, 'GET',
+    `/services/data/v64.0/tooling/executeAnonymous?anonymousBody=${encodeURIComponent(apex)}`);
+  if (!result.body || !result.body.success) {
+    const err = (result.body && (result.body.exceptionMessage || result.body.compileProblem)) || `HTTP ${result.status}`;
+    throw new Error(`Apex setPassword failed: ${err}`);
+  }
+}
+
+module.exports = { getAccessToken, sfRequest, soapLogin, soapChangeOwnPassword, apexSetPassword };
