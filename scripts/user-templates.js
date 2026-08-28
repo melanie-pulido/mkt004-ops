@@ -13,8 +13,7 @@ function buildCrmUser(id, orgConfig) {
     TimeZoneSidKey: 'America/Chicago',
     LocaleSidKey: 'en_US',
     EmailEncodingKey: 'UTF-8',
-    LanguageLocaleKey: 'en_US',
-    EmailVerified: true
+    LanguageLocaleKey: 'en_US'
   };
 }
 
