@@ -45,10 +45,9 @@ async function createMcUser(soapEndpoint, accessToken, id, mcConfig, roleObjectI
 
   const statusCode = resp.body.match(/<StatusCode>([^<]+)<\/StatusCode>/)?.[1];
   const statusMsg = resp.body.match(/<StatusMessage>([^<]+)<\/StatusMessage>/)?.[1];
-  const errMsg = resp.body.match(/<ErrorMessage>([^<]+)<\/ErrorMessage>/)?.[1];
 
   if (statusCode && statusCode !== 'OK') {
-    throw new Error(`Create failed: ${statusMsg || statusCode}${errMsg ? ' | ' + errMsg : ''}\nRaw: ${resp.body.substring(0, 2000)}`);
+    throw new Error(`Create failed: ${statusMsg || statusCode}`);
   }
 
   return username;
