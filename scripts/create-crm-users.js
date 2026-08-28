@@ -1,8 +1,8 @@
 'use strict';
 
-const { getAccessToken, sfRequest } = require('./sf-client');
+const { getAccessToken, sfRequest, apexSetPassword } = require('./sf-client');
 const { ORG_CONFIG } = require('./org-config');
-const { buildCrmUser } = require('./user-templates');
+const { buildCrmUser, CRM_PASSWORD } = require('./user-templates');
 const { parseIssueBody } = require('./parse-issue-body');
 
 async function main() {
@@ -41,7 +41,11 @@ async function main() {
 
       const userId = createResp.body.id;
 
-      // 2. Assign permission sets
+      // 2. Set password via Apex (avoids the REST /password endpoint which
+      //    marks passwords as admin-set; students still change it on first login)
+      await apexSetPassword(instanceUrl, accessToken, userId, CRM_PASSWORD);
+
+      // 3. Assign permission sets
       for (const psId of orgConfig.permissionSetIds) {
         const psResp = await sfRequest(instanceUrl, accessToken, 'POST',
           '/services/data/v64.0/sobjects/PermissionSetAssignment',
