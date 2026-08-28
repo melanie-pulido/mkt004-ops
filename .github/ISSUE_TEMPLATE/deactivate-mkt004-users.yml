@@ -1,0 +1,21 @@
+name: Deactivate MKT004 Users
+description: Deactivate CRM and MC users together for a MKT004 workshop org
+labels: ["deactivate-mkt004-users"]
+body:
+  - type: dropdown
+    id: org
+    attributes:
+      label: Org
+      description: Which org to deactivate users in
+      options:
+        - Org 1 (mkt004-1)
+    validations:
+      required: true
+  - type: textarea
+    id: user-ids
+    attributes:
+      label: User IDs
+      description: One ID per line. Deactivates both the CRM and MC user for each ID.
+      placeholder: "0001\n0002\n0003"
+    validations:
+      required: true

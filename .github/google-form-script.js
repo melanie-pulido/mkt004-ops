@@ -14,10 +14,8 @@
  *
  * FORM QUESTIONS (create in this order):
  *  1. "What would you like to do?"  — Dropdown (required)
- *       • Create CRM Users
- *       • Deactivate CRM Users
- *       • Create MC Users
- *       • Deactivate MC Users
+ *       • Create MKT004 Users
+ *       • Deactivate MKT004 Users
  *  2. "Org"  — Dropdown (required)
  *       • Org 1 (mkt004-1)
  *  3. "User IDs"  — Paragraph (required)
@@ -27,10 +25,8 @@
 var REPO = 'melanie-pulido/mkt004-ops';
 
 var LABEL_MAP = {
-  'Create CRM Users':    'create-users',
-  'Deactivate CRM Users': 'deactivate-users',
-  'Create MC Users':     'create-mc-users',
-  'Deactivate MC Users': 'deactivate-mc-users'
+  'Create MKT004 Users':    'create-mkt004-users',
+  'Deactivate MKT004 Users': 'deactivate-mkt004-users'
 };
 
 function onFormSubmit(e) {
