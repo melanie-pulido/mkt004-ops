@@ -1,0 +1,23 @@
+name: Create Users
+description: Create CRM users for a MKT004 workshop org
+labels: ["create-users"]
+body:
+  - type: dropdown
+    id: org
+    attributes:
+      label: Org
+      description: Which org pair to create users in
+      options:
+        - Org 1 (mkt004-1)
+        - Org 2 (mkt004-2)
+        - Org 3 (mkt004-3)
+    validations:
+      required: true
+  - type: textarea
+    id: user-ids
+    attributes:
+      label: User IDs
+      description: One ID per line (e.g. 0001). Each ID generates a full CRM user with the MKT004 Student profile and required permission sets.
+      placeholder: "0001\n0002\n0003"
+    validations:
+      required: true

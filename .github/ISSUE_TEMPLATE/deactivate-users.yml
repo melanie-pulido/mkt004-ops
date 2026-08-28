@@ -1,0 +1,23 @@
+name: Deactivate Users
+description: Deactivate CRM users in a MKT004 workshop org
+labels: ["deactivate-users"]
+body:
+  - type: dropdown
+    id: org
+    attributes:
+      label: Org
+      description: Which org pair to deactivate users in
+      options:
+        - Org 1 (mkt004-1)
+        - Org 2 (mkt004-2)
+        - Org 3 (mkt004-3)
+    validations:
+      required: true
+  - type: textarea
+    id: user-ids
+    attributes:
+      label: User IDs
+      description: One ID per line (e.g. 0001). Sets IsActive = false for each matching CRM user.
+      placeholder: "0001\n0002\n0003"
+    validations:
+      required: true

@@ -1,0 +1,85 @@
+name: Deactivate CRM Users
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  deactivate-users:
+    if: github.event.label.name == 'deactivate-users'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+
+    steps:
+      - name: Rename issue with timestamp
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const now = new Date().toLocaleString('en-US', {
+              timeZone: 'America/Los_Angeles',
+              year: 'numeric', month: '2-digit', day: '2-digit',
+              hour: '2-digit', minute: '2-digit', hour12: false
+            });
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              title: `[${now} PST] ${context.payload.issue.title}`
+            });
+
+      - name: Post in-progress comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: '⏳ Deactivating CRM users...'
+            });
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run deactivate-crm-users
+        id: run_script
+        run: node scripts/deactivate-crm-users.js > /tmp/result.txt 2>&1
+        continue-on-error: true
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          SF_AUTH_URL_ORG1: ${{ secrets.SF_AUTH_URL_ORG1 }}
+          SF_AUTH_URL_ORG2: ${{ secrets.SF_AUTH_URL_ORG2 }}
+          SF_AUTH_URL_ORG3: ${{ secrets.SF_AUTH_URL_ORG3 }}
+
+      - name: Post results comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const result = fs.readFileSync('/tmp/result.txt', 'utf8');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: result || '_(no output)_'
+            });
+
+      - name: Close issue on success
+        if: steps.run_script.outcome == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              state: 'closed'
+            });
+
+      - name: Fail job on script error
+        if: steps.run_script.outcome == 'failure'
+        run: exit 1

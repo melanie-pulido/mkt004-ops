@@ -1,0 +1,12 @@
+{
+  "name": "mkt004-ops",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GitHub Actions automation for MKT004 CRM user management",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "echo 'No tests yet'"
+  }
+}
