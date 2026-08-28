@@ -1,6 +1,6 @@
 'use strict';
 
-const { getMcAccessToken, mcSoapRequest, getMcRoleObjectId } = require('./mc-client');
+const { getMcAccessToken, mcSoapRequest, getMcRoleObjectId, updateUserMustChangePasswordFalse } = require('./mc-client');
 const { ORG_CONFIG } = require('./org-config');
 const { parseIssueBody } = require('./parse-issue-body');
 
@@ -85,6 +85,8 @@ async function main() {
     const username = `NTO_User_${id}@${mcConfig.loginDomain}`;
     try {
       await createMcUser(soapEndpoint, accessToken, id, mcConfig, roleObjectId);
+      // Second call required — SFMC ignores MustChangePassword=false on Create
+      await updateUserMustChangePasswordFalse(soapEndpoint, accessToken, username, mcConfig.parentMid);
       results.push({ id, username, statusIcon: '✅', statusText: 'created' });
     } catch (err) {
       results.push({ id, username, statusIcon: '❌', statusText: err.message });

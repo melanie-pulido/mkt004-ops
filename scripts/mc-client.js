@@ -82,4 +82,28 @@ async function getMcRoleObjectId(soapEndpoint, accessToken, roleName) {
   return match[1];
 }
 
-module.exports = { getMcAccessToken, mcSoapRequest, getMcRoleObjectId };
+async function updateUserMustChangePasswordFalse(soapEndpoint, accessToken, userId, parentMid) {
+  const bodyXml = `<UpdateRequest xmlns="http://exacttarget.com/wsdl/partnerAPI">
+    <Objects xsi:type="AccountUser">
+      <Client><ID>${parentMid}</ID></Client>
+      <UserID>${userId}</UserID>
+      <MustChangePassword>false</MustChangePassword>
+    </Objects>
+  </UpdateRequest>`;
+
+  const resp = await mcSoapRequest(soapEndpoint, accessToken, 'Update', bodyXml);
+  if (resp.status !== 200) throw new Error(`MustChangePassword update failed (HTTP ${resp.status}): ${resp.body}`);
+
+  if (resp.body.includes('<faultstring>')) {
+    const fault = resp.body.match(/<faultstring>([^<]+)<\/faultstring>/)?.[1] || 'Unknown SOAP fault';
+    throw new Error(`SOAP fault on update: ${fault}`);
+  }
+
+  const statusCode = resp.body.match(/<StatusCode>([^<]+)<\/StatusCode>/)?.[1];
+  const statusMsg = resp.body.match(/<StatusMessage>([^<]+)<\/StatusMessage>/)?.[1];
+  if (statusCode && statusCode !== 'OK') {
+    throw new Error(`MustChangePassword update failed: ${statusMsg || statusCode}`);
+  }
+}
+
+module.exports = { getMcAccessToken, mcSoapRequest, getMcRoleObjectId, updateUserMustChangePasswordFalse };
