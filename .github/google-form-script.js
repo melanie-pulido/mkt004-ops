@@ -35,11 +35,8 @@ function onFormSubmit(e) {
   var responses = e.response.getItemResponses();
   var data = {};
   responses.forEach(function(r) {
-    data[r.getItem().getTitle()] = r.getResponse();
+    data[r.getItem().getTitle().trim()] = r.getResponse();
   });
-
-  // DEBUG: log all field titles and values
-  Logger.log('Fields received: ' + JSON.stringify(data));
 
   var action  = data['What would you like to do?'];
   var org     = data['Select the org:'];
