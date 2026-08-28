@@ -1,66 +1,116 @@
-// MKT004 Ops — Google Form Apps Script
-// Paste the full contents into the Google Form's Apps Script editor:
-//   Form → ⋮ → Script editor
-//
-// Setup:
-// 1. Open Script Properties (Project Settings → Script Properties)
-// 2. Add property: GITHUB_TOKEN = <GitHub PAT with repo scope for melanie-pulido/mkt004-ops>
-// 3. Save and deploy a trigger: onFormSubmit → On form submit
-//
-// Form fields (in order):
-//   1. Operation  [Multiple choice: "Create Users" / "Deactivate Users"]
-//   2. Org        [Multiple choice: "Org 1 (mkt004-1)" / "Org 2 (mkt004-2)" / "Org 3 (mkt004-3)"]
-//   3. User IDs   [Paragraph text — one ID per line]
+/**
+ * MKT004-Ops — Google Form → GitHub Issues bridge
+ *
+ * Paste this entire script into the Google Form's Apps Script editor:
+ *   Form → ⋮ → Script editor
+ *
+ * SETUP:
+ *  1. Apps Script → Project Settings → Script Properties → Add property:
+ *       Name: GITHUB_TOKEN   Value: <PAT with repo scope for melanie-pulido>
+ *  2. Triggers (clock icon) → Add Trigger:
+ *       Function: onFormSubmit / Event source: From form / Event type: On form submit
+ *  3. Run testConnection() once manually to confirm your token works.
+ *  4. Enable "Collect email addresses" in Form Settings for confirmation emails.
+ *
+ * FORM QUESTIONS (create in this order):
+ *  1. "What would you like to do?"  — Dropdown (required)
+ *       • Create CRM Users
+ *       • Deactivate CRM Users
+ *       • Create MC Users
+ *       • Deactivate MC Users
+ *  2. "Org"  — Dropdown (required)
+ *       • Org 1 (mkt004-1)
+ *  3. "User IDs"  — Paragraph (required)
+ *       Description hint: One ID per line, e.g. 0001
+ */
 
-var GITHUB_OWNER = 'melanie-pulido';
-var GITHUB_REPO  = 'mkt004-ops';
+var REPO = 'melanie-pulido/mkt004-ops';
+
+var LABEL_MAP = {
+  'Create CRM Users':    'create-users',
+  'Deactivate CRM Users': 'deactivate-users',
+  'Create MC Users':     'create-mc-users',
+  'Deactivate MC Users': 'deactivate-mc-users'
+};
 
 function onFormSubmit(e) {
   var responses = e.response.getItemResponses();
-  var fields = {};
+  var data = {};
   responses.forEach(function(r) {
-    fields[r.getItem().getTitle()] = r.getResponse();
+    data[r.getItem().getTitle()] = r.getResponse();
   });
 
-  var operation = fields['Operation'] || '';
-  var org       = fields['Org'] || '';
-  var userIds   = fields['User IDs'] || '';
-  var email     = e.response.getRespondentEmail() || 'unknown';
+  var action  = data['What would you like to do?'];
+  var org     = data['Org'];
+  var userIds = data['User IDs'];
+  var label   = LABEL_MAP[action];
 
-  var label = operation === 'Create Users' ? 'create-users' : 'deactivate-users';
+  if (!label) {
+    Logger.log('Unknown action: ' + action);
+    return;
+  }
 
-  var issueTitle = operation + ' — ' + org;
-  var issueBody  = [
-    '### Org',
-    org,
-    '',
-    '### User IDs',
-    userIds,
-    '',
-    '---',
-    '_Submitted by: ' + email + '_'
-  ].join('\n');
+  var title = action + ' — ' + org;
+  var body  = '### Org\n\n' + org + '\n\n### User IDs\n\n' + userIds;
 
-  var token   = PropertiesService.getScriptProperties().getProperty('GITHUB_TOKEN');
-  var payload = JSON.stringify({ title: issueTitle, body: issueBody, labels: [label] });
+  var submitterEmail = e.response.getRespondentEmail();
+  if (submitterEmail) body += '\n\n---\n_Submitted by: ' + submitterEmail + '_';
+
+  var issueUrl = createGitHubIssue(title, body, label);
+
+  if (issueUrl && submitterEmail) {
+    MailApp.sendEmail({
+      to:      submitterEmail,
+      subject: '✅ Request received: ' + title,
+      body:    'Your request has been received and is being processed.\n\n' +
+               'Track the status and see results here:\n' + issueUrl + '\n\n' +
+               'Results will appear as a comment within a minute or two.\n\n' +
+               '— MKT004 Ops'
+    });
+  }
+}
+
+function createGitHubIssue(title, body, label) {
+  var token = PropertiesService.getScriptProperties().getProperty('GITHUB_TOKEN');
+  if (!token) { Logger.log('ERROR: GITHUB_TOKEN not set'); return null; }
 
   var options = {
-    method: 'post',
+    method:      'post',
     contentType: 'application/json',
-    headers: { Authorization: 'Bearer ' + token, 'User-Agent': 'mkt004-ops-form' },
-    payload: payload
+    headers: {
+      'Authorization':        'Bearer ' + token,
+      'Accept':               'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28'
+    },
+    payload:            JSON.stringify({ title: title, body: body, labels: [label] }),
+    muteHttpExceptions: true
   };
 
-  var url      = 'https://api.github.com/repos/' + GITHUB_OWNER + '/' + GITHUB_REPO + '/issues';
-  var response = UrlFetchApp.fetch(url, options);
-  var issue    = JSON.parse(response.getContentText());
+  var response = UrlFetchApp.fetch('https://api.github.com/repos/' + REPO + '/issues', options);
+  var code     = response.getResponseCode();
+  var result   = JSON.parse(response.getContentText());
 
-  // Send confirmation email to respondent
-  if (e.response.getRespondentEmail()) {
-    GmailApp.sendEmail(
-      e.response.getRespondentEmail(),
-      '[MKT004 Ops] ' + issueTitle + ' — submitted',
-      'Your request has been received and is being processed.\n\nTrack progress: ' + issue.html_url
-    );
+  if (code === 201) {
+    Logger.log('Issue created: ' + result.html_url);
+    return result.html_url;
+  } else {
+    Logger.log('ERROR ' + code + ': ' + response.getContentText());
+    return null;
   }
+}
+
+// Run manually once to verify your GitHub token works
+function testConnection() {
+  var token = PropertiesService.getScriptProperties().getProperty('GITHUB_TOKEN');
+  var options = {
+    headers: {
+      'Authorization':        'Bearer ' + token,
+      'Accept':               'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28'
+    },
+    muteHttpExceptions: true
+  };
+  var response = UrlFetchApp.fetch('https://api.github.com/repos/' + REPO, options);
+  Logger.log('Status: ' + response.getResponseCode());
+  Logger.log(response.getContentText().substring(0, 200));
 }
