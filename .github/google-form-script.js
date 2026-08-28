@@ -38,6 +38,9 @@ function onFormSubmit(e) {
     data[r.getItem().getTitle()] = r.getResponse();
   });
 
+  // DEBUG: log all field titles and values
+  Logger.log('Fields received: ' + JSON.stringify(data));
+
   var action  = data['What would you like to do?'];
   var org     = data['Select the org:'];
   var userIds = data['User IDs'];
