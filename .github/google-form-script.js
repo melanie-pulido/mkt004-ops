@@ -27,8 +27,9 @@
 var REPO = 'melanie-pulido/mkt004-ops';
 
 var LABEL_MAP = {
-  'Create MKT004 Users':    'create-mkt004-users',
-  'Deactivate MKT004 Users': 'deactivate-mkt004-users'
+  'Create MKT004 Users':            'create-mkt004-users',
+  'Deactivate MKT004 Users':        'deactivate-mkt004-users',
+  'Create MKT004 Instructor User':  'create-mkt004-instructor'
 };
 
 function onFormSubmit(e) {
@@ -38,18 +39,27 @@ function onFormSubmit(e) {
     data[r.getItem().getTitle().trim()] = r.getResponse();
   });
 
-  var action  = data['What would you like to do?'];
-  var org     = data['Select the org:'];
-  var userIds = data['User IDs'];
-  var label   = LABEL_MAP[action];
+  var action = data['What would you like to do?'];
+  var org    = data['Select the org:'];
+  var label  = LABEL_MAP[action];
 
   if (!label) {
     Logger.log('Unknown action: ' + action);
     return;
   }
 
-  var title = action + ' — ' + org;
-  var body  = '### Org\n\n' + org + '\n\n### User IDs\n\n' + userIds;
+  var title, body;
+
+  if (action === 'Create MKT004 Instructor User') {
+    var fullName = data['Full Name'];
+    var email    = data['Email Address'];
+    title = action + ' — ' + org;
+    body  = '### Org\n\n' + org + '\n\n### Full Name\n\n' + fullName + '\n\n### Email\n\n' + email;
+  } else {
+    var userIds = data['User IDs'];
+    title = action + ' — ' + org;
+    body  = '### Org\n\n' + org + '\n\n### User IDs\n\n' + userIds;
+  }
 
   var submitterEmail = e.response.getRespondentEmail();
   if (submitterEmail) body += '\n\n### Submitted By\n\n' + submitterEmail;
