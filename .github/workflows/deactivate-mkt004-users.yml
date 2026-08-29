@@ -58,6 +58,14 @@ jobs:
           MC_CLIENT_ID_ORG1: ${{ secrets.MC_CLIENT_ID_ORG1 }}
           MC_CLIENT_SECRET_ORG1: ${{ secrets.MC_CLIENT_SECRET_ORG1 }}
           MC_SUBDOMAIN_ORG1: ${{ secrets.MC_SUBDOMAIN_ORG1 }}
+          SF_AUTH_URL_ORG2: ${{ secrets.SF_AUTH_URL_ORG2 }}
+          MC_CLIENT_ID_ORG2: ${{ secrets.MC_CLIENT_ID_ORG2 }}
+          MC_CLIENT_SECRET_ORG2: ${{ secrets.MC_CLIENT_SECRET_ORG2 }}
+          MC_SUBDOMAIN_ORG2: ${{ secrets.MC_SUBDOMAIN_ORG2 }}
+          SF_AUTH_URL_ORG3: ${{ secrets.SF_AUTH_URL_ORG3 }}
+          MC_CLIENT_ID_ORG3: ${{ secrets.MC_CLIENT_ID_ORG3 }}
+          MC_CLIENT_SECRET_ORG3: ${{ secrets.MC_CLIENT_SECRET_ORG3 }}
+          MC_SUBDOMAIN_ORG3: ${{ secrets.MC_SUBDOMAIN_ORG3 }}
 
       - name: Post results comment
         uses: actions/github-script@v7
