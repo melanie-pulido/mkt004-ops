@@ -32,15 +32,43 @@ const ORG_CONFIG = {
     label: 'Org 2 (mkt004-2)',
     crmDomain: 'mkt004-2.com',
     authUrlEnvVar: 'SF_AUTH_URL_ORG2',
-    profileId: 'TBD',
-    permissionSetIds: []
+    profileId: '00ehm000000w1tNAAQ',
+    permissionSetIds: [
+      '0PShm000001AxvhGAC', // MarketingCloudManager
+      '0PShm000001AkkAGAS', // DataCloudActManager
+      '0PShm000001AxviGAC'  // TableauEinsteinIncludedAppBusinessUser
+    ],
+    mc: {
+      label: 'Org 2 MC (mkt004-mc-2)',
+      parentMid: 517036102,
+      childMid: 517036973,
+      loginDomain: 'mkt004-2.com',
+      roleName: 'Marketing_Cloud_Student',
+      clientIdEnvVar: 'MC_CLIENT_ID_ORG2',
+      clientSecretEnvVar: 'MC_CLIENT_SECRET_ORG2',
+      subdomainEnvVar: 'MC_SUBDOMAIN_ORG2'
+    }
   },
   'Org 3': {
     label: 'Org 3 (mkt004-3)',
     crmDomain: 'mkt004-3.com',
     authUrlEnvVar: 'SF_AUTH_URL_ORG3',
-    profileId: 'TBD',
-    permissionSetIds: []
+    profileId: '00ehm000000w1yDAAQ',
+    permissionSetIds: [
+      '0PShm000001Ay0XGAS', // MarketingCloudManager
+      '0PShm000001AyjtGAC', // DataCloudActManager
+      '0PShm000001Ay0YGAS'  // TableauEinsteinIncludedAppBusinessUser
+    ],
+    mc: {
+      label: 'Org 3 MC (mkt004-mc-3)',
+      parentMid: 517036103,
+      childMid: 517036978,
+      loginDomain: 'mkt004-3.com',
+      roleName: 'Marketing_Cloud_Student',
+      clientIdEnvVar: 'MC_CLIENT_ID_ORG3',
+      clientSecretEnvVar: 'MC_CLIENT_SECRET_ORG3',
+      subdomainEnvVar: 'MC_SUBDOMAIN_ORG3'
+    }
   }
 };
 
