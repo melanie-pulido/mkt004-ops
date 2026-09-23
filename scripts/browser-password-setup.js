@@ -29,44 +29,40 @@ async function browserPasswordSetup(username, currentPassword, newPassword, secu
       '(KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36'
     );
 
+    // Step 1: Enter username and submit (identifier-first flow — password field
+    // only appears after the username form is submitted)
     console.error(`[browser] navigating to ${LOGIN_URL}`);
     await page.goto(LOGIN_URL, { waitUntil: 'networkidle2', timeout: NAV_TIMEOUT });
-
-    // Diagnostic: dump all inputs and iframes visible at page load
-    const pageState = await page.evaluate(() => ({
-      url: window.location.href,
-      iframes: document.querySelectorAll('iframe').length,
-      inputs: Array.from(document.querySelectorAll('input')).map(i => ({
-        id: i.id, name: i.name, type: i.type,
-        visible: i.offsetWidth > 0 && i.offsetHeight > 0
-      }))
-    }));
-    console.error(`[browser] page state: ${JSON.stringify(pageState)}`);
 
     await page.waitForSelector('#username', { timeout: EL_TIMEOUT });
     await page.click('#username');
     await page.type('#username', username);
-    console.error(`[browser] typed username`);
+    console.error(`[browser] typed username, submitting identifier form`);
 
-    // Diagnostic: dump inputs again after typing username (some pages toggle fields via JS)
-    const stateAfterUsername = await page.evaluate(() => ({
-      url: window.location.href,
-      inputs: Array.from(document.querySelectorAll('input')).map(i => ({
-        id: i.id, name: i.name, type: i.type,
-        visible: i.offsetWidth > 0 && i.offsetHeight > 0
-      }))
-    }));
-    console.error(`[browser] state after username: ${JSON.stringify(stateAfterUsername)}`);
+    await page.click('#Login');
 
+    // The page may navigate (My Domain redirect) or stay and inject the
+    // password field via AJAX. Handle both.
+    try {
+      await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 });
+      console.error(`[browser] navigated after username submit: ${page.url()}`);
+    } catch (_) {
+      console.error(`[browser] no navigation after username submit (AJAX flow): ${page.url()}`);
+    }
+
+    // Step 2: Enter password
     await page.waitForSelector('#password', { timeout: EL_TIMEOUT });
+    console.error(`[browser] password field found at: ${page.url()}`);
     await page.click('#password');
     await page.type('#password', currentPassword);
-    console.error(`[browser] typed password`);
 
-    await page.waitForSelector('input[value="Log In"]', { timeout: EL_TIMEOUT });
-    await page.click('input[value="Log In"]');
-    console.error(`[browser] clicked Log In`);
+    // Click whichever login/submit button is present
+    const loginBtn = await page.$('#Login') || await page.$('input[type="submit"]');
+    if (!loginBtn) throw new Error('No login submit button found after password step');
+    await loginBtn.click();
+    console.error(`[browser] submitted login`);
 
+    // Step 3: Change Your Password screen
     await page.waitForSelector('#currentpassword', { visible: true, timeout: EL_TIMEOUT });
     console.error(`[browser] on Change Your Password screen: ${page.url()}`);
     await page.type('#currentpassword', currentPassword);
