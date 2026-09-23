@@ -8,5 +8,8 @@
   },
   "scripts": {
     "test": "echo 'No tests yet'"
+  },
+  "dependencies": {
+    "puppeteer-core": "^22.0.0"
   }
 }

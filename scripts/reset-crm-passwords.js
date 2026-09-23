@@ -1,8 +1,9 @@
 'use strict';
 
-const { getAccessToken, sfRequest, apexSetPassword, soapLogin, soapChangeOwnPassword, apexSetSecurityQuestion } = require('./sf-client');
+const { getAccessToken, sfRequest, apexSetPassword } = require('./sf-client');
 const { ORG_CONFIG } = require('./org-config');
 const { CRM_PASSWORD, TEMP_PASSWORD, SECURITY_ANSWER } = require('./user-templates');
+const { browserPasswordSetup } = require('./browser-password-setup');
 
 async function main() {
   const issueBody = process.env.ISSUE_BODY;
@@ -48,12 +49,9 @@ async function main() {
       // 2. Admin sets temp password so the current password slot is no longer journey@123
       await apexSetPassword(instanceUrl, accessToken, userId, TEMP_PASSWORD);
 
-      // 3. SOAP login as the user and change own password to the final value.
-      //    Salesforce records this as a user-initiated change, so a future reset
-      //    to journey@123 won't be rejected as "old password".
-      const { sessionId, serverUrl } = await soapLogin(instanceUrl, username, TEMP_PASSWORD);
-      await soapChangeOwnPassword(serverUrl, sessionId, TEMP_PASSWORD, CRM_PASSWORD);
-      await apexSetSecurityQuestion(instanceUrl, accessToken, userId, SECURITY_ANSWER);
+      // 3. Browser automation completes the Change Your Password form, setting
+      //    both the new password and the security question answer in one flow.
+      await browserPasswordSetup(username, TEMP_PASSWORD, CRM_PASSWORD, SECURITY_ANSWER);
     } catch (err) {
       statusIcon = '❌';
       statusText = err.message;

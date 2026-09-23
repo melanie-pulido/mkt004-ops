@@ -1,8 +1,9 @@
 'use strict';
 
-const { getAccessToken, sfRequest, apexSetPassword, soapLogin, soapChangeOwnPassword, apexSetSecurityQuestion } = require('./sf-client');
+const { getAccessToken, sfRequest, apexSetPassword } = require('./sf-client');
 const { ORG_CONFIG } = require('./org-config');
 const { buildCrmUser, CRM_PASSWORD, TEMP_PASSWORD, SECURITY_ANSWER } = require('./user-templates');
+const { browserPasswordSetup } = require('./browser-password-setup');
 const { parseIssueBody } = require('./parse-issue-body');
 
 async function main() {
@@ -41,13 +42,10 @@ async function main() {
 
       const userId = createResp.body.id;
 
-      // 2. Set temp password via Apex, then SOAP-change to final password as the
-      //    user. This prevents "can't use old password" errors on future resets
-      //    because Salesforce records the change as user-initiated, not admin-set.
+      // 2. Set temp password via Apex so the browser can log in, then complete
+      //    the Change Your Password form (sets final password + security answer).
       await apexSetPassword(instanceUrl, accessToken, userId, TEMP_PASSWORD);
-      const { sessionId, serverUrl } = await soapLogin(instanceUrl, userData.Username, TEMP_PASSWORD);
-      await soapChangeOwnPassword(serverUrl, sessionId, TEMP_PASSWORD, CRM_PASSWORD);
-      await apexSetSecurityQuestion(instanceUrl, accessToken, userId, SECURITY_ANSWER);
+      await browserPasswordSetup(userData.Username, TEMP_PASSWORD, CRM_PASSWORD, SECURITY_ANSWER);
 
       // 3. Assign permission sets
       for (const psId of orgConfig.permissionSetIds) {
