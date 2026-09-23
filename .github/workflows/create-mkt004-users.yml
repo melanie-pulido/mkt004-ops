@@ -48,6 +48,12 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Install dependencies
+        run: npm install
+
+      - name: Resolve Chrome path
+        run: echo "CHROME_PATH=$(which google-chrome || which google-chrome-stable || which chromium)" >> $GITHUB_ENV
+
       - name: Run create-mkt004-users
         id: run_script
         run: node scripts/create-mkt004-users.js > /tmp/result.txt 2>&1
