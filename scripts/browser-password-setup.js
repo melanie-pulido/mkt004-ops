@@ -16,7 +16,13 @@ async function browserPasswordSetup(username, currentPassword, newPassword, secu
   const browser = await puppeteer.launch({
     headless: true,
     executablePath,
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage', // prevents shared-memory crashes in CI
+      '--disable-gpu',
+      '--no-first-run',
+    ]
   });
 
   try {
@@ -26,18 +32,26 @@ async function browserPasswordSetup(username, currentPassword, newPassword, secu
       '(KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36'
     );
 
-    await page.goto(LOGIN_URL, { waitUntil: 'networkidle2', timeout: NAV_TIMEOUT });
+    console.error(`[browser] navigating to ${LOGIN_URL}`);
+    await page.goto(LOGIN_URL, { waitUntil: 'load', timeout: NAV_TIMEOUT });
+    console.error(`[browser] loaded: ${page.url()}`);
 
-    await page.waitForSelector('#username', { visible: true, timeout: EL_TIMEOUT });
+    await page.waitForSelector('#username', { timeout: EL_TIMEOUT });
+    await page.click('#username');
     await page.type('#username', username);
+    console.error(`[browser] typed username`);
 
-    await page.waitForSelector('#password', { visible: true, timeout: EL_TIMEOUT });
+    await page.waitForSelector('#password', { timeout: EL_TIMEOUT });
+    await page.click('#password');
     await page.type('#password', currentPassword);
+    console.error(`[browser] typed password`);
 
-    await page.waitForSelector('input[value="Log In"]', { visible: true, timeout: EL_TIMEOUT });
+    await page.waitForSelector('input[value="Log In"]', { timeout: EL_TIMEOUT });
     await page.click('input[value="Log In"]');
+    console.error(`[browser] clicked Log In`);
 
     await page.waitForSelector('#currentpassword', { visible: true, timeout: EL_TIMEOUT });
+    console.error(`[browser] on Change Your Password screen: ${page.url()}`);
     await page.type('#currentpassword', currentPassword);
 
     await page.waitForSelector('#newpassword', { visible: true, timeout: EL_TIMEOUT });
@@ -51,8 +65,10 @@ async function browserPasswordSetup(username, currentPassword, newPassword, secu
 
     await page.waitForSelector('button#password-button', { visible: true, timeout: EL_TIMEOUT });
     await page.click('button#password-button');
+    console.error(`[browser] submitted Change Your Password form`);
 
-    await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: NAV_TIMEOUT });
+    await page.waitForNavigation({ waitUntil: 'load', timeout: NAV_TIMEOUT });
+    console.error(`[browser] final url: ${page.url()}`);
 
     if (page.url().includes('login.salesforce.com')) {
       throw new Error('Still on login page after password change — form may have errored');
