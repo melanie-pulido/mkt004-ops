@@ -1,8 +1,8 @@
 'use strict';
 
-const { getAccessToken, sfRequest, apexSetPassword, soapLogin, soapChangeOwnPassword } = require('./sf-client');
+const { getAccessToken, sfRequest, apexSetPassword, soapLogin, soapChangeOwnPassword, apexSetSecurityQuestion } = require('./sf-client');
 const { ORG_CONFIG } = require('./org-config');
-const { CRM_PASSWORD, TEMP_PASSWORD } = require('./user-templates');
+const { CRM_PASSWORD, TEMP_PASSWORD, SECURITY_ANSWER } = require('./user-templates');
 
 async function main() {
   const issueBody = process.env.ISSUE_BODY;
@@ -53,6 +53,7 @@ async function main() {
       //    to journey@123 won't be rejected as "old password".
       const { sessionId, serverUrl } = await soapLogin(instanceUrl, username, TEMP_PASSWORD);
       await soapChangeOwnPassword(serverUrl, sessionId, TEMP_PASSWORD, CRM_PASSWORD);
+      await apexSetSecurityQuestion(instanceUrl, accessToken, userId, SECURITY_ANSWER);
     } catch (err) {
       statusIcon = '❌';
       statusText = err.message;

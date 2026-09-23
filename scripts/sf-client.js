@@ -192,4 +192,23 @@ async function apexSetPassword(instanceUrl, accessToken, userId, password) {
   }
 }
 
-module.exports = { getAccessToken, sfRequest, soapLogin, soapChangeOwnPassword, apexSetPassword };
+// Set a user's security question and answer via anonymous Apex DML.
+// Finds the "city of birth" question from the SecurityQuestion object and
+// sets the answer on the User record. Eliminates the first-login security
+// question prompt without requiring browser automation.
+async function apexSetSecurityQuestion(instanceUrl, accessToken, userId, answer) {
+  const apex = [
+    `List<SecurityQuestion> sqs = [SELECT Id FROM SecurityQuestion WHERE Text LIKE '%city%' LIMIT 1];`,
+    `if (!sqs.isEmpty()) {`,
+    `  update new User(Id = '${userId}', SecurityQuestionId = sqs[0].Id, SecurityAnswer = '${answer}');`,
+    `}`
+  ].join('\n');
+  const result = await sfRequest(instanceUrl, accessToken, 'GET',
+    `/services/data/v64.0/tooling/executeAnonymous?anonymousBody=${encodeURIComponent(apex)}`);
+  if (!result.body || !result.body.success) {
+    const err = (result.body && (result.body.exceptionMessage || result.body.compileProblem)) || `HTTP ${result.status}`;
+    throw new Error(`Apex setSecurityQuestion failed: ${err}`);
+  }
+}
+
+module.exports = { getAccessToken, sfRequest, soapLogin, soapChangeOwnPassword, apexSetPassword, apexSetSecurityQuestion };
