@@ -1,8 +1,8 @@
 'use strict';
 
-const { getAccessToken, sfRequest, apexSetPassword } = require('./sf-client');
+const { getAccessToken, sfRequest, apexSetPassword, soapLogin, soapChangeOwnPassword } = require('./sf-client');
 const { ORG_CONFIG } = require('./org-config');
-const { buildCrmUser, CRM_PASSWORD } = require('./user-templates');
+const { buildCrmUser, CRM_PASSWORD, TEMP_PASSWORD } = require('./user-templates');
 const { parseIssueBody } = require('./parse-issue-body');
 
 async function main() {
@@ -41,9 +41,12 @@ async function main() {
 
       const userId = createResp.body.id;
 
-      // 2. Set password via Apex (avoids the REST /password endpoint which
-      //    marks passwords as admin-set; students still change it on first login)
-      await apexSetPassword(instanceUrl, accessToken, userId, CRM_PASSWORD);
+      // 2. Set temp password via Apex, then SOAP-change to final password as the
+      //    user. This prevents "can't use old password" errors on future resets
+      //    because Salesforce records the change as user-initiated, not admin-set.
+      await apexSetPassword(instanceUrl, accessToken, userId, TEMP_PASSWORD);
+      const { sessionId, serverUrl } = await soapLogin(instanceUrl, userData.Username, TEMP_PASSWORD);
+      await soapChangeOwnPassword(serverUrl, sessionId, TEMP_PASSWORD, CRM_PASSWORD);
 
       // 3. Assign permission sets
       for (const psId of orgConfig.permissionSetIds) {
