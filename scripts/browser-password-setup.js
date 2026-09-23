@@ -6,9 +6,6 @@ const LOGIN_URL = 'https://login.salesforce.com';
 const NAV_TIMEOUT = 60000;
 const EL_TIMEOUT  = 30000;
 
-// Completes Salesforce's first-login "Change Your Password" flow via headless
-// Chrome. This is the only reliable way to set both the password and the
-// security question answer in a single step without triggering the prompt again.
 async function browserPasswordSetup(username, currentPassword, newPassword, securityAnswer) {
   const executablePath = process.env.CHROME_PATH;
   if (!executablePath) throw new Error('CHROME_PATH env var is required');
@@ -19,7 +16,7 @@ async function browserPasswordSetup(username, currentPassword, newPassword, secu
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage', // prevents shared-memory crashes in CI
+      '--disable-dev-shm-usage',
       '--disable-gpu',
       '--no-first-run',
     ]
@@ -33,13 +30,33 @@ async function browserPasswordSetup(username, currentPassword, newPassword, secu
     );
 
     console.error(`[browser] navigating to ${LOGIN_URL}`);
-    await page.goto(LOGIN_URL, { waitUntil: 'load', timeout: NAV_TIMEOUT });
-    console.error(`[browser] loaded: ${page.url()}`);
+    await page.goto(LOGIN_URL, { waitUntil: 'networkidle2', timeout: NAV_TIMEOUT });
+
+    // Diagnostic: dump all inputs and iframes visible at page load
+    const pageState = await page.evaluate(() => ({
+      url: window.location.href,
+      iframes: document.querySelectorAll('iframe').length,
+      inputs: Array.from(document.querySelectorAll('input')).map(i => ({
+        id: i.id, name: i.name, type: i.type,
+        visible: i.offsetWidth > 0 && i.offsetHeight > 0
+      }))
+    }));
+    console.error(`[browser] page state: ${JSON.stringify(pageState)}`);
 
     await page.waitForSelector('#username', { timeout: EL_TIMEOUT });
     await page.click('#username');
     await page.type('#username', username);
     console.error(`[browser] typed username`);
+
+    // Diagnostic: dump inputs again after typing username (some pages toggle fields via JS)
+    const stateAfterUsername = await page.evaluate(() => ({
+      url: window.location.href,
+      inputs: Array.from(document.querySelectorAll('input')).map(i => ({
+        id: i.id, name: i.name, type: i.type,
+        visible: i.offsetWidth > 0 && i.offsetHeight > 0
+      }))
+    }));
+    console.error(`[browser] state after username: ${JSON.stringify(stateAfterUsername)}`);
 
     await page.waitForSelector('#password', { timeout: EL_TIMEOUT });
     await page.click('#password');
