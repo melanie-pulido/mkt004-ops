@@ -3,7 +3,8 @@
 const { getAccessToken, sfRequest, apexSetPassword } = require('./sf-client');
 const { getMcAccessToken, getMcRoleObjectId, mcSoapRequest, updateUserMustChangePasswordFalse } = require('./mc-client');
 const { ORG_CONFIG } = require('./org-config');
-const { buildCrmUser, CRM_PASSWORD } = require('./user-templates');
+const { buildCrmUser, CRM_PASSWORD, TEMP_PASSWORD, SECURITY_ANSWER } = require('./user-templates');
+const { browserPasswordSetup } = require('./browser-password-setup');
 const { parseIssueBody } = require('./parse-issue-body');
 
 const MC_PASSWORD = 'journey@123';
@@ -86,7 +87,8 @@ async function main() {
         throw new Error(`HTTP ${createResp.status}: ${errs}`);
       }
       const userId = createResp.body.id;
-      await apexSetPassword(instanceUrl, sfToken, userId, CRM_PASSWORD);
+      await apexSetPassword(instanceUrl, sfToken, userId, TEMP_PASSWORD);
+      await browserPasswordSetup(userData.Username, TEMP_PASSWORD, CRM_PASSWORD, SECURITY_ANSWER);
       for (const psId of orgConfig.permissionSetIds) {
         await sfRequest(instanceUrl, sfToken, 'POST', '/services/data/v64.0/sobjects/PermissionSetAssignment',
           { AssigneeId: userId, PermissionSetId: psId });

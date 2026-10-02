@@ -49,6 +49,12 @@ async function browserPasswordSetup(username, currentPassword, newPassword, secu
     if (!loginBtn) throw new Error('No login submit button found after password step');
     await loginBtn.click();
 
+    // Wait for the post-login navigation to settle before looking for the
+    // Change Your Password screen (which may be on a different URL).
+    try {
+      await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: NAV_TIMEOUT });
+    } catch (_) { /* page may not navigate if already on the right URL */ }
+
     // Change Your Password screen
     await page.waitForSelector('#currentpassword', { visible: true, timeout: EL_TIMEOUT });
     await page.type('#currentpassword', currentPassword);
