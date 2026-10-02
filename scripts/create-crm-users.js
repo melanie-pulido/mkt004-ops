@@ -2,8 +2,7 @@
 
 const { getAccessToken, sfRequest, apexSetPassword } = require('./sf-client');
 const { ORG_CONFIG } = require('./org-config');
-const { buildCrmUser, CRM_PASSWORD, TEMP_PASSWORD, SECURITY_ANSWER } = require('./user-templates');
-const { browserPasswordSetup } = require('./browser-password-setup');
+const { buildCrmUser, CRM_PASSWORD } = require('./user-templates');
 const { parseIssueBody } = require('./parse-issue-body');
 
 async function main() {
@@ -42,10 +41,8 @@ async function main() {
 
       const userId = createResp.body.id;
 
-      // 2. Set temp password via Apex so the browser can log in, then complete
-      //    the Change Your Password form (sets final password + security answer).
-      await apexSetPassword(instanceUrl, accessToken, userId, TEMP_PASSWORD);
-      await browserPasswordSetup(userData.Username, TEMP_PASSWORD, CRM_PASSWORD, SECURITY_ANSWER);
+      // 2. Set password
+      await apexSetPassword(instanceUrl, accessToken, userId, CRM_PASSWORD);
 
       // 3. Assign permission sets
       for (const psId of orgConfig.permissionSetIds) {
