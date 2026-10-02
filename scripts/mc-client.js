@@ -107,6 +107,33 @@ async function updateUserMustChangePasswordFalse(soapEndpoint, accessToken, user
 }
 
 async function deactivateMcUser(soapEndpoint, accessToken, userId, parentMid) {
+  // Retrieve first to check existence and current state
+  const retrieveXml = `<RetrieveRequestMsg xmlns="http://exacttarget.com/wsdl/partnerAPI">
+    <RetrieveRequest>
+      <ObjectType>AccountUser</ObjectType>
+      <Properties>UserID</Properties>
+      <Properties>ActiveFlag</Properties>
+      <Filter xsi:type="SimpleFilterPart">
+        <Property>UserID</Property>
+        <SimpleOperator>equals</SimpleOperator>
+        <Value>${userId}</Value>
+      </Filter>
+    </RetrieveRequest>
+  </RetrieveRequestMsg>`;
+
+  const retrieveResp = await mcSoapRequest(soapEndpoint, accessToken, 'Retrieve', retrieveXml);
+  if (retrieveResp.status !== 200) throw new Error(`Lookup failed (HTTP ${retrieveResp.status})`);
+  if (retrieveResp.body.includes('<faultstring>')) {
+    const fault = retrieveResp.body.match(/<faultstring>([^<]+)<\/faultstring>/)?.[1] || 'Unknown';
+    throw new Error(`SOAP fault on lookup: ${fault}`);
+  }
+
+  const foundId = retrieveResp.body.match(/<UserID>([^<]+)<\/UserID>/)?.[1];
+  if (!foundId) throw new Error('User not found');
+
+  const activeFlag = retrieveResp.body.match(/<ActiveFlag>([^<]+)<\/ActiveFlag>/)?.[1];
+  if (activeFlag === 'false') return 'already inactive';
+
   const bodyXml = `<UpdateRequest xmlns="http://exacttarget.com/wsdl/partnerAPI">
     <Objects xsi:type="AccountUser">
       <Client><ID>${parentMid}</ID></Client>
@@ -117,17 +144,15 @@ async function deactivateMcUser(soapEndpoint, accessToken, userId, parentMid) {
 
   const resp = await mcSoapRequest(soapEndpoint, accessToken, 'Update', bodyXml);
   if (resp.status !== 200) throw new Error(`Deactivate failed (HTTP ${resp.status}): ${resp.body}`);
-
   if (resp.body.includes('<faultstring>')) {
     const fault = resp.body.match(/<faultstring>([^<]+)<\/faultstring>/)?.[1] || 'Unknown SOAP fault';
     throw new Error(`SOAP fault on deactivate: ${fault}`);
   }
-
   const statusCode = resp.body.match(/<StatusCode>([^<]+)<\/StatusCode>/)?.[1];
-  const statusMsg = resp.body.match(/<StatusMessage>([^<]+)<\/StatusMessage>/)?.[1];
-  if (statusCode && statusCode !== 'OK') {
-    throw new Error(`Deactivate failed: ${statusMsg || statusCode}`);
-  }
+  const statusMsg  = resp.body.match(/<StatusMessage>([^<]+)<\/StatusMessage>/)?.[1];
+  if (statusCode && statusCode !== 'OK') throw new Error(`Deactivate failed: ${statusMsg || statusCode}`);
+
+  return 'deactivated';
 }
 
 module.exports = { getMcAccessToken, mcSoapRequest, getMcRoleObjectId, updateUserMustChangePasswordFalse, deactivateMcUser };

@@ -63,7 +63,7 @@ async function main() {
 
     // MC
     try {
-      await deactivateMcUser(soapEndpoint, mcToken, mcUsername, mcConfig.parentMid);
+      mcText = await deactivateMcUser(soapEndpoint, mcToken, mcUsername, mcConfig.parentMid);
     } catch (err) {
       mcIcon = '❌'; mcText = err.message;
     }
