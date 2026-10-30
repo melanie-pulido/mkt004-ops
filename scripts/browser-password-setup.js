@@ -4,7 +4,6 @@ const puppeteer = require('puppeteer-core');
 
 const LOGIN_URL = 'https://login.salesforce.com';
 const NAV_TIMEOUT = 60000;
-const EL_TIMEOUT  = 30000;
 
 async function browserPasswordSetup(username, currentPassword, newPassword, securityAnswer) {
   const executablePath = process.env.CHROME_PATH;
@@ -29,43 +28,26 @@ async function browserPasswordSetup(username, currentPassword, newPassword, secu
       '(KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36'
     );
 
-    // Identifier-first flow: password field only appears after username is submitted
+    // Identifier-first flow: submit username, then password field appears on same page
     await page.goto(LOGIN_URL, { waitUntil: 'networkidle2', timeout: NAV_TIMEOUT });
-    await page.waitForSelector('#username', { timeout: EL_TIMEOUT });
-    await page.click('#username');
-    await page.type('#username', username);
-    await page.click('#Login');
+    await page.locator('#username').fill(username);
+    await page.locator('#Login').click();
 
-    // Page may navigate (My Domain redirect) or inject password field via AJAX
-    try {
-      await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 });
-    } catch (_) { /* AJAX flow — no navigation */ }
+    // Password field appears after username submit (AJAX, no navigation)
+    await page.locator('#password').fill(currentPassword);
+    await page.locator('#Login').click();
 
-    await page.waitForSelector('#password', { timeout: EL_TIMEOUT });
-    await page.click('#password');
-    await page.type('#password', currentPassword);
-
-    const loginBtn = await page.$('#Login') || await page.$('input[type="submit"]');
-    if (!loginBtn) throw new Error('No login submit button found after password step');
-    await loginBtn.click();
-
-    // Wait for the post-login navigation to settle before looking for the
-    // Change Your Password screen (which may be on a different URL).
+    // Wait for post-login navigation before looking for Change Your Password screen
     try {
       await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: NAV_TIMEOUT });
-    } catch (_) { /* page may not navigate if already on the right URL */ }
+    } catch (_) { /* may not navigate if already on the right URL */ }
 
     // Change Your Password screen
-    await page.waitForSelector('#currentpassword', { visible: true, timeout: EL_TIMEOUT });
-    await page.type('#currentpassword', currentPassword);
-    await page.waitForSelector('#newpassword', { visible: true, timeout: EL_TIMEOUT });
-    await page.type('#newpassword', newPassword);
-    await page.waitForSelector('#confirmpassword', { visible: true, timeout: EL_TIMEOUT });
-    await page.type('#confirmpassword', newPassword);
-    await page.waitForSelector('#answer', { visible: true, timeout: EL_TIMEOUT });
-    await page.type('#answer', securityAnswer);
-    await page.waitForSelector('button#password-button', { visible: true, timeout: EL_TIMEOUT });
-    await page.click('button#password-button');
+    await page.locator('#currentpassword').fill(currentPassword);
+    await page.locator('#newpassword').fill(newPassword);
+    await page.locator('#confirmpassword').fill(newPassword);
+    await page.locator('#answer').fill(securityAnswer);
+    await page.locator('button#password-button').click();
 
     await page.waitForNavigation({ waitUntil: 'load', timeout: NAV_TIMEOUT });
 
