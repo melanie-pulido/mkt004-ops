@@ -29,17 +29,47 @@ async function browserPasswordSetup(username, currentPassword, newPassword, secu
     );
 
     // 1. Login — fill both fields then click
-    await page.goto(LOGIN_URL, { waitUntil: 'networkidle2', timeout: NAV_TIMEOUT });
-    await page.locator('#username').fill(username);
-    await page.locator('#password').fill(currentPassword);
+    console.log('[browser] Navigating to login page...');
+    await page.goto(LOGIN_URL, { waitUntil: 'load', timeout: NAV_TIMEOUT });
+    console.log('[browser] Login page loaded:', page.url());
 
+    // Fill username — Salesforce may use identifier-first flow (typing username
+    // triggers a redirect to the org login page before showing the password field).
+    console.log('[browser] Filling username...');
+    await page.waitForSelector('#username', { timeout: NAV_TIMEOUT });
+    await page.evaluate((val) => {
+      const el = document.querySelector('#username');
+      el.value = val;
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    }, username);
+
+    // Click Next/Login — if only #username is present it's identifier-first,
+    // so we click whatever submit button exists and wait for navigation.
+    const hasPassword = await page.$('#password');
+    if (!hasPassword) {
+      console.log('[browser] Identifier-first flow detected, clicking Next...');
+      await Promise.all([
+        page.waitForNavigation({ waitUntil: 'load', timeout: NAV_TIMEOUT }),
+        page.click('#Login, [type="submit"]'),
+      ]);
+      console.log('[browser] After Next URL:', page.url());
+    }
+
+    // Now fill password and submit
+    console.log('[browser] Filling password...');
+    await page.waitForSelector('#password', { timeout: NAV_TIMEOUT });
+    await page.type('#password', currentPassword, { delay: 10 });
+    console.log('[browser] Clicking login button...');
     await Promise.all([
-      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: NAV_TIMEOUT }),
-      page.locator('#Login').click(),
+      page.waitForNavigation({ waitUntil: 'load', timeout: NAV_TIMEOUT }),
+      page.click('#Login'),
     ]);
+    console.log('[browser] Post-login URL:', page.url());
 
     // 2. Wait for Change Your Password screen
+    console.log('[browser] Waiting for #newpassword...');
     await page.waitForSelector('#newpassword', { timeout: NAV_TIMEOUT });
+    console.log('[browser] Change password screen visible');
 
     // Use page.type() with delay so Salesforce's onkeyup validation fires
     await page.type('#currentpassword', currentPassword, { delay: 10 });
@@ -63,13 +93,15 @@ async function browserPasswordSetup(username, currentPassword, newPassword, secu
     const saveSelector = '#password-button:not([disabled]), button[name="save"]:not([disabled])';
     await page.waitForSelector(saveSelector, { timeout: 10000 });
 
+    console.log('[browser] Clicking save...');
     await Promise.all([
-      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: NAV_TIMEOUT }),
+      page.waitForNavigation({ waitUntil: 'load', timeout: NAV_TIMEOUT }),
       page.click(saveSelector),
     ]);
 
     // 4. Verify we left both login and ChangePassword screens without errors
     const currentUrl = page.url();
+    console.log('[browser] Post-save URL:', currentUrl);
     if (currentUrl.includes('login') || currentUrl.includes('ChangePassword')) {
       const errorText = await page.evaluate(() => {
         const el = document.querySelector('#error, .messageText');
