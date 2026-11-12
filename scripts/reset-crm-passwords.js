@@ -2,7 +2,8 @@
 
 const { getAccessToken, sfRequest, apexSetPassword } = require('./sf-client');
 const { ORG_CONFIG } = require('./org-config');
-const { CRM_PASSWORD } = require('./user-templates');
+const { CRM_PASSWORD, TEMP_PASSWORD, SECURITY_ANSWER } = require('./user-templates');
+const { browserPasswordSetup } = require('./browser-password-setup');
 
 async function main() {
   const issueBody = process.env.ISSUE_BODY;
@@ -45,8 +46,9 @@ async function main() {
       }
       const userId = queryResp.body.records[0].Id;
 
-      // 2. Set password — user will be prompted to reset on first login.
-      await apexSetPassword(instanceUrl, accessToken, userId, CRM_PASSWORD);
+      // 2. Set temp password, then complete the Change Your Password form.
+      await apexSetPassword(instanceUrl, accessToken, userId, TEMP_PASSWORD);
+      await browserPasswordSetup(username, TEMP_PASSWORD, CRM_PASSWORD, SECURITY_ANSWER);
     } catch (err) {
       statusIcon = '❌';
       statusText = err.message;
