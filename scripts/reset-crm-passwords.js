@@ -2,8 +2,7 @@
 
 const { getAccessToken, sfRequest, apexSetPassword } = require('./sf-client');
 const { ORG_CONFIG } = require('./org-config');
-const { CRM_PASSWORD, TEMP_PASSWORD, SECURITY_ANSWER } = require('./user-templates');
-const { browserPasswordSetup } = require('./browser-password-setup');
+const { CRM_PASSWORD } = require('./user-templates');
 
 async function main() {
   const issueBody = process.env.ISSUE_BODY;
@@ -46,12 +45,8 @@ async function main() {
       }
       const userId = queryResp.body.records[0].Id;
 
-      // 2. Admin sets temp password so the current password slot is no longer journey@123
-      await apexSetPassword(instanceUrl, accessToken, userId, TEMP_PASSWORD);
-
-      // 3. Browser automation completes the Change Your Password form, setting
-      //    both the new password and the security question answer in one flow.
-      await browserPasswordSetup(username, TEMP_PASSWORD, CRM_PASSWORD, SECURITY_ANSWER);
+      // 2. Set password — user will be prompted to reset on first login.
+      await apexSetPassword(instanceUrl, accessToken, userId, CRM_PASSWORD);
     } catch (err) {
       statusIcon = '❌';
       statusText = err.message;
