@@ -1,9 +1,9 @@
 'use strict';
 
-const { getAccessToken, sfRequest, apexSetPassword, apexSetSecurityQuestion } = require('./sf-client');
+const { getAccessToken, sfRequest, apexSetPassword } = require('./sf-client');
 const { getMcAccessToken, getMcRoleObjectId, mcSoapRequest, updateUserMustChangePasswordFalse } = require('./mc-client');
 const { ORG_CONFIG } = require('./org-config');
-const { buildCrmUser, CRM_PASSWORD, SECURITY_ANSWER } = require('./user-templates');
+const { buildCrmUser, CRM_PASSWORD } = require('./user-templates');
 const { parseIssueBody } = require('./parse-issue-body');
 
 const MC_PASSWORD = 'journey@123';
@@ -87,7 +87,6 @@ async function main() {
       }
       const userId = createResp.body.id;
       await apexSetPassword(instanceUrl, sfToken, userId, CRM_PASSWORD);
-      await apexSetSecurityQuestion(instanceUrl, sfToken, userId, SECURITY_ANSWER).catch(() => {});
       for (const psId of orgConfig.permissionSetIds) {
         await sfRequest(instanceUrl, sfToken, 'POST', '/services/data/v64.0/sobjects/PermissionSetAssignment',
           { AssigneeId: userId, PermissionSetId: psId });

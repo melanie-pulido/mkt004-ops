@@ -1,8 +1,8 @@
 'use strict';
 
-const { getAccessToken, sfRequest, apexSetPassword, apexSetSecurityQuestion } = require('./sf-client');
+const { getAccessToken, sfRequest, apexSetPassword } = require('./sf-client');
 const { ORG_CONFIG } = require('./org-config');
-const { buildCrmUser, CRM_PASSWORD, SECURITY_ANSWER } = require('./user-templates');
+const { buildCrmUser, CRM_PASSWORD } = require('./user-templates');
 const { parseIssueBody } = require('./parse-issue-body');
 
 async function main() {
@@ -42,7 +42,6 @@ async function main() {
       const userId = createResp.body.id;
 
       await apexSetPassword(instanceUrl, accessToken, userId, CRM_PASSWORD);
-      await apexSetSecurityQuestion(instanceUrl, accessToken, userId, SECURITY_ANSWER).catch(() => {});
 
       // 3. Assign permission sets
       for (const psId of orgConfig.permissionSetIds) {
