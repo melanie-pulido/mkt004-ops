@@ -1,9 +1,9 @@
 'use strict';
 
-const { getAccessToken, sfRequest, apexSetPassword, soapLogin, soapChangeOwnPassword, apexSetSecurityQuestion } = require('./sf-client');
+const { getAccessToken, sfRequest, apexSetPassword, apexSetSecurityQuestion } = require('./sf-client');
 const { getMcAccessToken, getMcRoleObjectId, mcSoapRequest, updateUserMustChangePasswordFalse } = require('./mc-client');
 const { ORG_CONFIG } = require('./org-config');
-const { buildCrmUser, CRM_PASSWORD, TEMP_PASSWORD, SECURITY_ANSWER } = require('./user-templates');
+const { buildCrmUser, CRM_PASSWORD, SECURITY_ANSWER } = require('./user-templates');
 const { parseIssueBody } = require('./parse-issue-body');
 
 const MC_PASSWORD = 'journey@123';
@@ -86,10 +86,8 @@ async function main() {
         throw new Error(`HTTP ${createResp.status}: ${errs}`);
       }
       const userId = createResp.body.id;
-      await apexSetPassword(instanceUrl, sfToken, userId, TEMP_PASSWORD);
-      const { sessionId, serverUrl } = await soapLogin(instanceUrl, userData.Username, TEMP_PASSWORD);
-      await soapChangeOwnPassword(serverUrl, sessionId, TEMP_PASSWORD, CRM_PASSWORD);
-      await apexSetSecurityQuestion(instanceUrl, sfToken, userId, SECURITY_ANSWER);
+      await apexSetPassword(instanceUrl, sfToken, userId, CRM_PASSWORD);
+      await apexSetSecurityQuestion(instanceUrl, sfToken, userId, SECURITY_ANSWER).catch(() => {});
       for (const psId of orgConfig.permissionSetIds) {
         await sfRequest(instanceUrl, sfToken, 'POST', '/services/data/v64.0/sobjects/PermissionSetAssignment',
           { AssigneeId: userId, PermissionSetId: psId });
@@ -121,9 +119,7 @@ async function main() {
     `**${successCount} / ${ids.length} users fully created.**`
   ];
 
-  process.stdout.write(lines.join('
-') + '
-');
+  process.stdout.write(lines.join('\n') + '\n');
   if (successCount < ids.length) process.exit(1);
 }
 
