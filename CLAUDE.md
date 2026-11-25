@@ -53,7 +53,8 @@ Given an ID like `0001`:
 | CRM Alias | `NTU0001` |
 | CRM Profile | MKT004 Student |
 | CRM Permission Sets | MarketingCloudManager, DataCloudActManager, TableauEinsteinIncludedAppBusinessUser |
-| Password | `journey@123` |
+| CRM Password | `journey@1234` (users must change on first login) |
+| MC Password | `journey@123` |
 | EmailVerified | true (no manual email confirmation needed) |
 
 ---
