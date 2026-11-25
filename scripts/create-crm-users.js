@@ -1,9 +1,8 @@
 'use strict';
 
-const { getAccessToken, sfRequest, apexSetPassword } = require('./sf-client');
+const { getAccessToken, sfRequest, apexSetPassword, soapLogin, soapChangeOwnPassword, apexSetSecurityQuestion } = require('./sf-client');
 const { ORG_CONFIG } = require('./org-config');
 const { buildCrmUser, CRM_PASSWORD, TEMP_PASSWORD, SECURITY_ANSWER } = require('./user-templates');
-const { browserPasswordSetup } = require('./browser-password-setup');
 const { parseIssueBody } = require('./parse-issue-body');
 
 async function main() {
@@ -42,10 +41,12 @@ async function main() {
 
       const userId = createResp.body.id;
 
-      // 2. Set temp password, then complete the Change Your Password form in the
-      //    browser (sets final password + security answer in one step).
+      // 2. Set temp password, then use SOAP to change it to the final password
+      //    and set the security question — no browser required.
       await apexSetPassword(instanceUrl, accessToken, userId, TEMP_PASSWORD);
-      await browserPasswordSetup(userData.Username, TEMP_PASSWORD, CRM_PASSWORD, SECURITY_ANSWER);
+      const { sessionId, serverUrl } = await soapLogin(instanceUrl, userData.Username, TEMP_PASSWORD);
+      await soapChangeOwnPassword(serverUrl, sessionId, TEMP_PASSWORD, CRM_PASSWORD);
+      await apexSetSecurityQuestion(instanceUrl, accessToken, userId, SECURITY_ANSWER);
 
       // 3. Assign permission sets
       for (const psId of orgConfig.permissionSetIds) {
@@ -79,7 +80,9 @@ async function main() {
     `**${successCount} / ${ids.length} users created successfully.**`
   ];
 
-  process.stdout.write(lines.join('\n') + '\n');
+  process.stdout.write(lines.join('
+') + '
+');
 
   if (successCount < ids.length) process.exit(1);
 }
